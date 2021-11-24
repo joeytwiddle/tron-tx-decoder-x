@@ -2,20 +2,9 @@
 <img src="https://tron.network/static/images/logo.png" width=400 />
 </p>
 
-## tron-tx-decoder
+## tron-tx-decoder-tronweb
 
-[![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com) ![npm](https://img.shields.io/npm/v/tron-tx-decoder) ![npm bundle size](https://img.shields.io/bundlephobia/min/tron-tx-decoder) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT) 
-
-Lightweight utility for decoding function parameters and function output from Tron blocklchain transactions.
-
-- Minimal dependencies.
-
-- Decode method name used by specific Transaction Id.
-
-- Find the input parameter passed to function by Transaction Id.
-
-- Find the exact output returned from the function by Transaction Id.
-
+[![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com) ![npm](https://img.shields.io/npm/v/tron-tx-decoder-tronweb) ![npm bundle size](https://img.shields.io/bundlephobia/min/tron-tx-decoder-tronweb) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 - _[Built with ethers.js](https://github.com/ethers-io/ethers.js/)_.
 
@@ -24,16 +13,25 @@ Lightweight utility for decoding function parameters and function output from Tr
 ## Installation
 
 ```bash
-npm i tron-tx-decoder
+npm i tron-tx-decoder-tronweb
 ```
 
 ### Initialization
 
 ```js
-const TronTxDecoder = require('tron-tx-decoder');
+const TronTxDecoder = require('tron-tx-decoder-tronweb');
+const Tronweb = require('tronweb');
 
-const decoder = new TronTxDecoder({ mainnet: true });
-// { mainnet: false } for testnet
+const tronweb = new TronWeb({
+    network: 'shasta',
+    fullHost: 'https://api.shasta.trongrid.io',
+    apiUrl: 'https://shastapi.tronscan.org/api',
+    eventServer: 'https://api.shasta.trongrid.io',
+    privateKey: 'PRIVATE_HERE',
+    headers: { 'TRON-PRO-API-KEY': 'API KEY FROM trongrid.io' },
+});
+
+const decoder = new TronTxDecoder({ tronweb });
 ```
 
 ### Decode Input:
@@ -115,12 +113,3 @@ decodeRevertMessage("5d6db71f3316a2abdf7f08f97cd42880209ee7344816d404ce865a8679b
 ## Contributing
 
 - Issues & Pull requests are welcome! Fork, branch, and submit PR.
-
-## Changelog
-
-- [Changelog](https://github.com/meetsiraja/tron-tx-decoder/blob/master/CHANGELOG.md)
-
-## Licence
-
-[MIT](https://github.com/meetsiraja/tron-tx-decoder/blob/master/LICENCE.md)
-
