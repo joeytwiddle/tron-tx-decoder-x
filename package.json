@@ -40,7 +40,6 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "ethers": "^4.0.40",
-    "tronweb": "^4.0.1"
+    "ethers": "^4.0.40"
   }
 }
