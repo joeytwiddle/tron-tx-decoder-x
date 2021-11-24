@@ -23,12 +23,12 @@ class TronTxDecoder {
     async decodeResultById(transactionID){
 
         try{
-            let transaction = await _getTransaction(transactionID, this.tronNode);
+            let transaction = await _getTransaction(transactionID);
             let data = '0x'+transaction.raw_data.contract[0].parameter.value.data;
             let contractAddress = transaction.raw_data.contract[0].parameter.value.contract_address;
             if(contractAddress === undefined)
                 throw 'No Contract found for this transaction hash.';
-            let abi = await _getContractABI(contractAddress, this.tronNode);
+            let abi = await _getContractABI(contractAddress);
 
             const resultInput = _extractInfoFromABI(data, abi);
             let functionABI = abi.find(i => i.name === resultInput.method);
@@ -45,7 +45,7 @@ class TronTxDecoder {
             const names = resultInput.namesOutput;
             names.forEach(function(n,l){this[l]||(this[l]=null);},names);
 
-            var encodedResult = await _getHexEncodedResult(transactionID, this.tronNode);
+            var encodedResult = await _getHexEncodedResult(transactionID);
             if(!encodedResult.includes('0x')){
                 let resMessage = "";
                 let i = 0, l = encodedResult.length;
@@ -97,7 +97,7 @@ class TronTxDecoder {
             let contractAddress = transaction.raw_data.contract[0].parameter.value.contract_address;
             if(contractAddress === undefined)
                 throw 'No Contract found for this transaction hash.';
-            let abi = await _getContractABI(contractAddress, this.tronNode);
+            let abi = await _getContractABI(contractAddress);
 
             const resultInput = _extractInfoFromABI(data, abi);
             var names = resultInput.namesInput;
