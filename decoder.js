@@ -1,8 +1,4 @@
-const axios = require('axios')
 const { utils } = require('ethers')
-
-const MAINNET_NODE = 'https://api.trongrid.io';
-const TESTNET_NODE = 'https://api.shasta.trongrid.io'
 
 class TronTxDecoder {
 
@@ -10,14 +6,11 @@ class TronTxDecoder {
      * Create a TronTxDecoder object
      *
      * @param {Object} config the rootchain configuration object
-     * @param {Web3} config.web3 a web3 instance
-     * @param {string} config.plasmaContractAddress the address of the PlasmaFramework contract
      * @return {TronTxDecoder} a TronWeb object
      *
      */
-    constructor ({ mainnet }) {
-        mainnet ? this.tronNode = MAINNET_NODE : this.tronNode = TESTNET_NODE;
-        // (this.tronWeb, this.tronNode) = initTronWeb(mainnet);
+    constructor ({ tronweb }) {
+        this.tronWeb = tronweb;
     }
 
     /**
@@ -99,7 +92,7 @@ class TronTxDecoder {
 
         try{
 
-            let transaction = await _getTransaction(transactionID, this.tronNode);
+            let transaction = await _getTransaction(transactionID);
             let data = '0x'+transaction.raw_data.contract[0].parameter.value.data;
             let contractAddress = transaction.raw_data.contract[0].parameter.value.contract_address;
             if(contractAddress === undefined)
@@ -138,14 +131,14 @@ class TronTxDecoder {
 
         try{
 
-            let transaction = await _getTransaction(transactionID, this.tronNode);
+            let transaction = await _getTransaction(transactionID);
             let contractAddress = transaction.raw_data.contract[0].parameter.value.contract_address;
             if(contractAddress === undefined)
                 throw 'No Contract found for this transaction hash.';
             
             let txStatus = transaction.ret[0].contractRet;
             if(txStatus == 'REVERT'){
-                let encodedResult = await _getHexEncodedResult(transactionID, this.tronNode)
+                let encodedResult = await _getHexEncodedResult(transactionID)
                 encodedResult = encodedResult.substring(encodedResult.length - 64, encodedResult.length);
                 let resMessage = (Buffer.from(encodedResult, 'hex').toString('utf8')).replace(/\0/g, '');
 
@@ -167,35 +160,35 @@ class TronTxDecoder {
     }
 }
 
-async function _getTransaction(transactionID, tronNode){
+async function _getTransaction(transactionID){
     try{
-        const transaction = await axios.post(`${tronNode}/wallet/gettransactionbyid`, { value: transactionID});
-        if (!Object.keys(transaction.data).length)
+        const transaction = await this.tronWeb.trx.getTransaction(transactionID);
+        if (!Object.keys(transaction).length)
             throw 'Transaction not found';
-        return transaction.data
+        return transaction
     }catch(error){
         throw error;
     }
 }
 
-async function _getHexEncodedResult(transactionID, tronNode){
+async function _getHexEncodedResult(transactionID){
     try{
-        const transaction = await axios.post(`${tronNode}/wallet/gettransactioninfobyid`, { value: transactionID});
-        if (!Object.keys(transaction.data).length)
+        const transaction = await this.tronWeb.trx.getTransactionInfo(transactionID);
+        if (!Object.keys(transaction).length)
             throw 'Transaction not found';
-        return "" == transaction.data.contractResult[0] ? transaction.data.resMessage : "0x"+transaction.data.contractResult[0];
+        return "" == transaction.contractResult[0] ? transaction.resMessage : "0x"+transaction.contractResult[0];
     }catch(error){
         throw error;
     }    
 }
 
 
-async function _getContractABI(contractAddress, tronNode){
+async function _getContractABI(contractAddress){
     try{
-        const contract = await axios.post(`${tronNode}/wallet/getcontract`, { value: contractAddress});
+        const contract = await this.tronWeb.trx.getContract(contractAddress);
         if (contract.Error)
             throw 'Contract does not exist';
-        return contract.data.abi.entrys;
+        return contract.abi.entrys;
     }catch(error){
         throw error;
     }

@@ -1,7 +1,7 @@
 {
-  "name": "tron-tx-decoder",
-  "version": "2.0.2",
-  "description": "Lightweight utility for decoding function parameters and function output from Tron blocklchain transactions.",
+  "name": "tron-tx-decoder-tronweb",
+  "version": "0.1.0",
+  "description": "Lightweight utility for decoding function parameters and function output from Tron blockchain transactions.",
   "license": "MIT",
   "keywords": [
     "tron",
@@ -24,22 +24,23 @@
     "ethers.js",
     "trx",
     "raw",
-    "tx"],  
+    "tx"
+  ],
   "repository": {
-    "type" : "git",
-    "url" : "https://github.com/meetsiraja/tron-tx-decoder.git"
+    "type": "git",
+    "url": "https://github.com/dlarchikov/tron-tx-decoder-tronweb.git"
   },
   "bugs": {
-    "url": "https://github.com/meetsiraja/tron-tx-decoder/issues"
+    "url": "https://github.com/dlarchikov/tron-tx-decoder-tronweb"
   },
-  "homepage": "https://github.com/meetsiraja/tron-tx-decoder",
-  "author": "https://github.com/meetsiraja",
+  "homepage": "https://github.com/dlarchikov/tron-tx-decoder-tronweb",
+  "author": "https://github.com/dlarchikov/tron-tx-decoder-tronweb",
   "main": "decoder.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "axios": "^0.21.1",
-    "ethers": "^4.0.40"
+    "ethers": "^4.0.40",
+    "tronweb": "^4.0.1"
   }
 }
