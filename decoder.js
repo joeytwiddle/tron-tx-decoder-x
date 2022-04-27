@@ -28,66 +28,78 @@ class TronTxDecoder {
             if (contractAddress === undefined)
                 throw 'No Contract found for this transaction hash.'
             let abi = await this._getContractABI(contractAddress)
+            const encodedResult = await this._getHexEncodedResult(transactionID)
 
-            const resultInput = this._extractInfoFromABI(data, abi)
-            let functionABI = abi.find(i => i.name === resultInput.method)
-
-            if (!functionABI.outputs)
-                return {
-                    methodName: resultInput.method,
-                    outputNames: {},
-                    outputTypes: {},
-                    decodedOutput: {_length: 0},
-                }
-            let outputType = functionABI.outputs
-            const types = outputType.map(({type}) => type)
-            const names = resultInput.namesOutput
-            names.forEach(function (n, l) {
-                this[l] || (this[l] = null)
-            }, names)
-
-            var encodedResult = await this._getHexEncodedResult(transactionID)
-            if (!encodedResult.includes('0x')) {
-                let resMessage = ''
-                let i = 0, l = encodedResult.length
-                for (; i < l; i += 2) {
-                    let code = parseInt(encodedResult.substr(i, 2), 16)
-                    resMessage += String.fromCharCode(code)
-                }
-
-                return {
-                    methodName: resultInput.method,
-                    outputNames: names,
-                    outputTypes: types,
-                    decodedOutput: resMessage,
-                }
-
-            }
-
-            var outputs = utils.defaultAbiCoder.decode(types, encodedResult)
-            let outputObject = {_length: types.length}
-            for (var i = 0; i < types.length; i++) {
-                let output = outputs[i]
-                outputObject[i] = output
-            }
-            return {
-                methodName: resultInput.method,
-                outputNames: names,
-                outputTypes: types,
-                decodedOutput: outputObject,
-            }
-
+            return this.decodeResultFromData(data, encodedResult, abi)
         } catch (err) {
             throw new Error(err)
         }
     }
 
     /**
-     * Decode result data from the transaction hash
+     * Decode result data from raw data
      *
-     * @method decodeResultById
-     * @param {string} transactionID the transaction hash
+     * @method decodeResultFroMData
+     * @param {string} data raw data
+     * @param {string} encodedResult encoded result
+     * @param {object} abi ABI
      * @return {Object} decoded result with method name
+     */
+    decodeResultFromData(data, encodedResult, abi) {
+      const resultInput = this._extractInfoFromABI(data, abi)
+      let functionABI = abi.find(i => i.name === resultInput.method)
+
+      if (!functionABI.outputs)
+          return {
+              methodName: resultInput.method,
+              outputNames: {},
+              outputTypes: {},
+              decodedOutput: {_length: 0},
+          }
+      let outputType = functionABI.outputs
+      const types = outputType.map(({type}) => type)
+      const names = resultInput.namesOutput
+      names.forEach(function (n, l) {
+          this[l] || (this[l] = null)
+      }, names)
+
+      if (!encodedResult.includes('0x')) {
+          let resMessage = ''
+          let i = 0, l = encodedResult.length
+          for (; i < l; i += 2) {
+              let code = parseInt(encodedResult.substr(i, 2), 16)
+              resMessage += String.fromCharCode(code)
+          }
+
+          return {
+              methodName: resultInput.method,
+              outputNames: names,
+              outputTypes: types,
+              decodedOutput: resMessage,
+          }
+
+      }
+
+      var outputs = utils.defaultAbiCoder.decode(types, encodedResult)
+      let outputObject = {_length: types.length}
+      for (var i = 0; i < types.length; i++) {
+          let output = outputs[i]
+          outputObject[i] = output
+      }
+      return {
+          methodName: resultInput.method,
+          outputNames: names,
+          outputTypes: types,
+          decodedOutput: outputObject,
+      }
+    }
+
+    /**
+     * Decode input data from the transaction hash
+     *
+     * @method decodeInputById
+     * @param {string} transactionID the transaction hash
+     * @return {Object} decoded input with method name
      */
     async decodeInputById(transactionID) {
 
@@ -100,25 +112,36 @@ class TronTxDecoder {
                 throw 'No Contract found for this transaction hash.'
             let abi = await this._getContractABI(contractAddress)
 
-            const resultInput = this._extractInfoFromABI(data, abi)
-            var names = resultInput.namesInput
-            var inputs = resultInput.inputs
-            var types = resultInput.typesInput
-            let inputObject = {_length: names.length}
-            for (var i = 0; i < names.length; i++) {
-                let input = inputs[i]
-                inputObject[i] = input
-            }
-            return {
-                methodName: resultInput.method,
-                inputNames: names,
-                inputTypes: types,
-                decodedInput: inputObject,
-            }
-
+            return this.decodeInputFromData(data, abi);
         } catch (err) {
             throw new Error(err)
         }
+    }
+
+    /**
+     * Decode input data from the raw data
+     *
+     * @method decodeInputFromData
+     * @param {string} data raw data
+     * @param {object} abi ABI
+     * @return {Object} decoded result with method name
+     */
+    decodeInputFromData(data, abi) {
+      const resultInput = this._extractInfoFromABI(data, abi)
+      var names = resultInput.namesInput
+      var inputs = resultInput.inputs
+      var types = resultInput.typesInput
+      let inputObject = {_length: names.length}
+      for (var i = 0; i < names.length; i++) {
+          let input = inputs[i]
+          inputObject[i] = input
+      }
+      return {
+          methodName: resultInput.method,
+          inputNames: names,
+          inputTypes: types,
+          decodedInput: inputObject,
+      }
     }
 
     /**
@@ -138,26 +161,40 @@ class TronTxDecoder {
                 throw 'No Contract found for this transaction hash.'
 
             let txStatus = transaction.ret[0].contractRet
-            if (txStatus == 'REVERT') {
-                let encodedResult = await this._getHexEncodedResult(transactionID)
-                encodedResult = encodedResult.substring(encodedResult.length - 64, encodedResult.length)
-                let resMessage = (Buffer.from(encodedResult, 'hex').toString('utf8')).replace(/\0/g, '')
+            const encodedResult = txStatus == 'REVERT' ? await this._getHexEncodedResult(transactionID) : ''
 
-                return {
-                    txStatus: txStatus,
-                    revertMessage: resMessage.replace(/\0/g, ''),
-                }
-
-            } else {
-                return {
-                    txStatus: txStatus,
-                    revertMessage: '',
-                }
-            }
-
+            return this.decodeRevertMessageFromTransaction(transaction, encodedResult)
         } catch (err) {
             throw new Error(err)
         }
+    }
+
+    /**
+     * Decode revert message from transaction
+     *
+     * @method decodeRevertMessageFromData
+     * @param {object} transaction transaction object
+     * @param {string} encodedResult encoded result (if any)
+     * @return {Object} decoded result with method name
+     */
+    decodeRevertMessageFromTransaction(transaction, encodedResult) {
+      const txStatus = transaction.ret[0].contractRet
+
+      if (txStatus == 'REVERT') {
+          const encodedResultNoPrefix = encodedResult.substring(encodedResult.length - 64, encodedResult.length)
+          let resMessage = (Buffer.from(encodedResultNoPrefix, 'hex').toString('utf8')).replace(/\0/g, '')
+
+          return {
+              txStatus: txStatus,
+              revertMessage: resMessage,
+          }
+
+      } else {
+          return {
+              txStatus: txStatus,
+              revertMessage: '',
+          }
+      }
     }
 
     async _getTransaction(transactionID) {
