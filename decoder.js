@@ -1,5 +1,53 @@
 const {utils} = require('ethers')
 
+// This is our own fork of https://github.com/dlarchikov/tron-tx-decoder-tronweb
+// which provides some functions for decoding results from raw data, without
+// making any network calls.
+//
+// This allows us to quickly decode lots of transactions from one block.
+
+/* Usage:
+
+  const decoder = new TronTxDecoder({ tronweb: tronWeb });
+
+  // You might want to cache this contract object, since it requires a slow network call to fetch it
+  const contract = await tronWebRetro.contract().at(contractAddress);
+
+  // An example, fetching transactions from our java-tron node
+  const blockData = await tronWeb.trx.getBlock(blockNumber);
+  const tx = blockData.transactions[3];
+
+  const txContractAddressHex = tx.raw_data?.contract?.[0]?.parameter?.value?.contract_address;
+  const txContractAddress = tronWeb.address.fromHex(txContractAddressHex);
+
+  const { abi } = contract;
+  const data = '0x' + tx.raw_data.contract[0].parameter.value.data;
+
+  const contractRet = tx.ret?.[0]?.contractRet;
+  const methodCallFailed = contractRet === 'OUT_OF_ENERGY' || contractRet === 'OUT_OF_BANDWIDTH' || contractRet === 'REVERT';
+
+  // This is good enough for contract method calls which succeeded, but not for calls which failed
+  const emptyEncodedResult = '0x0000000000000000000000000000000000000000000000000000000000000000';
+  // To avoid making this network call, do not process this transaction, if you know the call failed
+  const encodedResult = methodCallFailed ? await decoder._getHexEncodedResult(tx.txID) : emptyEncodedResult;
+
+  const decodedRevertMsg = decoder.decodeRevertMessageFromTransaction(tx, encodedResult);
+
+  // If the smart contract method call failed, the later decodes might also fail, so I recommend aborting at this point.
+  if (methodCallFailed) {
+    return { decodedRevertMsg };
+  }
+  // Example failure from decodeInput() and decodeResult(), if you don't do this:
+  //     Error: insufficient data for uint256 type (arg="", coderType="uint256", value="0x", version=4.0.49)
+
+  const decodedInput = decoder.decodeInputFromData(data, abi);
+
+  const decodedResult = decoder.decodeResultFromData(data, encodedResult, abi);
+
+  return { decodedInput, decodedResult, decodedRevertMsg };
+
+*/
+
 class TronTxDecoder {
 
     /**
