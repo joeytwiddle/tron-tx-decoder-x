@@ -97,7 +97,7 @@ class TronTxDecoder {
       const resultInput = this._extractInfoFromABI(data, abi)
       let functionABI = abi.find(i => i.name === resultInput.method)
 
-      if (!functionABI.outputs)
+      if (!functionABI || !functionABI.outputs)
           return {
               methodName: resultInput.method,
               outputNames: {},
